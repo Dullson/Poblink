@@ -8,8 +8,8 @@
 // @include     https://*
 // @grant       none
 // @run-at      document-idle
-// @updateURL   https://raw.githubusercontent.com/Dullson/Poblink/master/Poblink.user.js
-// @downloadURL https://raw.githubusercontent.com/Dullson/Poblink/master/Poblink.user.js
+// @updateURL   https://github.com/Dullson/Poblink/raw/master/Poblink.user.js
+// @downloadURL https://github.com/Dullson/Poblink/raw/master/Poblink.user.js
 // @supportURL  https://github.com/Dullson/Poblink/issues
 // ==/UserScript==
 
