@@ -6,7 +6,7 @@ This userscript adds pob protocol links next to pastebin links on various websit
 
 # Installing
 - First, you need a userscript manager extension like [Violentmonkey](https://violentmonkey.github.io/) to run the script.
-- Then, you can install the userscript via clicking [this link](https://raw.githubusercontent.com/Dullson/Poblink/master/Poblink.user.js) or using the `Poblink.user.js` file on the master branch.
+- Then, you can install the userscript via clicking [this link](https://github.com/Dullson/Poblink/raw/master/Poblink.user.js) or using the `Poblink.user.js` file on the master branch.
 - You also need to setup link protocol association using [Poblink Setup](https://github.com/Dullson/PoblinkSetup) or the generated links won't work.
 
 Currently the script works on poe forums, youtube, twitch chat and probably many other sites using a generic parser. There is also support for Poe.Ninja and Pastebin to open build codes directly but the code import is not supported on PoB yet.
