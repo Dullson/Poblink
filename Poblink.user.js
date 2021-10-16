@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        Poblink
-// @version     0.1.0
+// @version     0.1.0-beta
 // @description A script to add path of building links next to pastebin links
 // @license     MIT
 // @author      Dullson
@@ -8,8 +8,8 @@
 // @include     https://*
 // @grant       none
 // @run-at      document-idle
-// @updateURL   https://github.com/Dullson/Poblink/raw/master/Poblink.user.js
-// @downloadURL https://github.com/Dullson/Poblink/raw/master/Poblink.user.js
+//// @updateURL   https://github.com/Dullson/Poblink/raw/master/Poblink.user.js
+//// @downloadURL https://github.com/Dullson/Poblink/raw/master/Poblink.user.js
 // @supportURL  https://github.com/Dullson/Poblink/issues
 // ==/UserScript==
 
@@ -28,16 +28,16 @@ const presets = [{
     regex: /^https:\/\/www\.twitch\.tv\//,
     run: twitch,
   },
-  // { // code imports are not implemented yet
-  //   name: 'Poe.ninja',
-  //   regex: /^https:\/\/poe\.ninja\/\w+?\/builds\/char/,
-  //   run: poeNinja,
-  // },
-  // {
-  //   name: 'Pastebin',
-  //   regex: /^https:\/\/pastebin\.com\/\w{8}/,
-  //   run: pastebin,
-  // },
+  { // code imports are not implemented yet
+    name: 'Poe.ninja',
+    regex: /^https:\/\/poe\.ninja\/\w+?\/builds\/char/,
+    run: poeNinja,
+  },
+  {
+    name: 'Pastebin',
+    regex: /^https:\/\/pastebin\.com\/\w{8}/,
+    run: pastebin,
+  },
 ];
 
 (function initialize() {
