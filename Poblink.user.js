@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        Poblink
-// @version     0.1.0
+// @version     0.2.0
 // @description A script to add path of building links next to pastebin links
 // @license     MIT
 // @author      Dullson
@@ -27,6 +27,11 @@ const presets = [{
     name: 'Twitch',
     regex: /^https:\/\/www\.twitch\.tv\//,
     run: twitch,
+  },
+  {
+    name: 'Reddit',
+    regex: /^https:\/\/www\.reddit\.com\//,
+    run: reddit,
   },
   // { // code imports are not implemented yet
   //   name: 'Poe.ninja',
@@ -78,10 +83,12 @@ function poeNinja() {
 
 function youtube() {
   const regex = /pastebin\.com%2F(\w{8})/;
-  for (const element of document.querySelectorAll('a[href *="pastebin.com%2F"]')) {
+  const query = 'a[href*="pastebin.com%2F"]';
+
+  for (const element of document.querySelectorAll(query)) {
     let pbId = element.href.match(regex)[1];
     console.log(`static adding id ${pbId}`);
-    let poblinkElement = createElement(`<a id="poblink" href="${createPobPastebinLink(pbId)}" style="margin: 1ex">Poblink</a>`);
+    let poblinkElement = createElement(`<a id="poblink" href="${createPobPastebinLink(pbId)}" class="poblink" style="margin: 1ex">Poblink</a>`);
     element.parentElement.insertBefore(poblinkElement, element.nextSibling);
   }
   new MutationObserver((mutationRecords, observer) => {
@@ -89,10 +96,10 @@ function youtube() {
         for (const addedNode of mutation.addedNodes) {
           if (!addedNode.tagName) continue
           let elements = [];
-          if (addedNode.matches('a[href*="pastebin.com%2F"]')) {
+          if (addedNode.matches(query)) {
             elements.push(addedNode);
           } else {
-            for (const element of addedNode.querySelectorAll('a[href*="pastebin.com%2F"]')) {
+            for (const element of addedNode.querySelectorAll(query)) {
               elements.push(element)
             }
           }
@@ -102,8 +109,18 @@ function youtube() {
             if (!match) continue;
             let pbId = match[1];
             console.log(`dynamic adding pbId ${pbId}`);
-            let poblinkElement = createElement(`<a id="poblink" href="${createPobPastebinLink(pbId)}" style="margin: 1ex">Poblink</a>`);
+            let poblinkElement = createElement(`<a id="poblink" href="${createPobPastebinLink(pbId)}" class="poblink" style="margin: 1ex">Poblink</a>`);
             element.parentElement.insertBefore(poblinkElement, element.nextSibling);
+          }
+        }
+        if (mutation.type === "childList" & mutation.target.matches(query)) {
+          let element = mutation.target;
+          if (element.nextSibling.matches(".poblink")) {
+            let match = element.href.match(regex);
+            if (!match) break;
+            let pbId = match[1];
+            console.log(`updating pbId ${pbId}`);
+            element.nextSibling.href = createPobPastebinLink(pbId);
           }
         }
       }
@@ -155,6 +172,58 @@ async function twitch() {
     })
     .observe(chatContainer, {
       childList: true,
+    });
+}
+
+function reddit() {
+  const regex = /https:\/\/pastebin\.com\/(\w{8})/;
+  const query = 'a[href^="https://pastebin.com/"]';
+
+  function parseElements(elements) {
+    for (const element of elements) {
+      let match = element.href.match(regex);
+      if (!match) continue;
+      let pbId = match[1];
+      let poblinkElement = createElement(`
+      <a href="${createPobPastebinLink(pbId)}"
+      class="poblink" 
+      style="
+        margin: 1ex;
+        color: var(--newCommunityTheme-linkText);
+        text-decoration: underline;
+      ">Poblink</a>
+      `);
+      element.parentElement.insertBefore(poblinkElement, element.nextSibling);
+    }
+  }
+  parseElements(document.querySelectorAll(query));
+
+  new MutationObserver((mutationRecords, observer) => {
+      for (const mutation of mutationRecords) {
+        for (const addedNode of mutation.addedNodes) {
+          if (!addedNode.tagName) continue;
+          let elements = [];
+          if (addedNode.matches(query)) {
+            elements.push(addedNode);
+          } else {
+            for (const e of addedNode.querySelectorAll(query)) {
+              elements.push(e);
+            }
+          }
+          parseElements(elements)
+        }
+        // reddit is removing our links for some reason
+        for (const removedNode of mutation.removedNodes) {
+          if (!removedNode.tagName) continue;
+          if (removedNode.matches('.poblink')) {
+            mutation.target.insertBefore(removedNode, mutation.nextSibling);
+          }
+        }
+      }
+    })
+    .observe(document.documentElement, {
+      childList: true,
+      subtree: true
     });
 }
 
