@@ -28,6 +28,11 @@ const presets = [{
     regex: /^https:\/\/www\.twitch\.tv\//,
     run: twitch,
   },
+  {
+    name: 'Reddit',
+    regex: /^https:\/\/www\.reddit\.com\//,
+    run: reddit,
+  },
   // { // code imports are not implemented yet
   //   name: 'Poe.ninja',
   //   regex: /^https:\/\/poe\.ninja\/\w+?\/builds\/char/,
@@ -155,6 +160,58 @@ async function twitch() {
     })
     .observe(chatContainer, {
       childList: true,
+    });
+}
+
+function reddit() {
+  const regex = /https:\/\/pastebin\.com\/(\w{8})/;
+  const query = 'a[href^="https://pastebin.com/"]';
+
+  function parseElements(elements) {
+    for (const element of elements) {
+      let match = element.href.match(regex);
+      if (!match) continue;
+      let pbId = match[1];
+      let poblinkElement = createElement(`
+      <a href="${createPobPastebinLink(pbId)}"
+      class="poblink" 
+      style="
+        margin: 1ex;
+        color: var(--newCommunityTheme-linkText);
+        text-decoration: underline;
+      ">Poblink</a>
+      `);
+      element.parentElement.insertBefore(poblinkElement, element.nextSibling);
+    }
+  }
+  parseElements(document.querySelectorAll(query));
+
+  new MutationObserver((mutationRecords, observer) => {
+      for (const mutation of mutationRecords) {
+        for (const addedNode of mutation.addedNodes) {
+          if (!addedNode.tagName) continue;
+          let elements = [];
+          if (addedNode.matches(query)) {
+            elements.push(addedNode);
+          } else {
+            for (const e of addedNode.querySelectorAll(query)) {
+              elements.push(e);
+            }
+          }
+          parseElements(elements)
+        }
+        // reddit is removing our links for some reason
+        for (const removedNode of mutation.removedNodes) {
+          if (!removedNode.tagName) continue;
+          if (removedNode.matches('.poblink')) {
+            mutation.target.insertBefore(removedNode, mutation.nextSibling);
+          }
+        }
+      }
+    })
+    .observe(document.documentElement, {
+      childList: true,
+      subtree: true
     });
 }
 
