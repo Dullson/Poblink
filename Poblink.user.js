@@ -83,10 +83,12 @@ function poeNinja() {
 
 function youtube() {
   const regex = /pastebin\.com%2F(\w{8})/;
-  for (const element of document.querySelectorAll('a[href *="pastebin.com%2F"]')) {
+  const query = 'a[href*="pastebin.com%2F"]';
+
+  for (const element of document.querySelectorAll(query)) {
     let pbId = element.href.match(regex)[1];
     console.log(`static adding id ${pbId}`);
-    let poblinkElement = createElement(`<a id="poblink" href="${createPobPastebinLink(pbId)}" style="margin: 1ex">Poblink</a>`);
+    let poblinkElement = createElement(`<a id="poblink" href="${createPobPastebinLink(pbId)}" class="poblink" style="margin: 1ex">Poblink</a>`);
     element.parentElement.insertBefore(poblinkElement, element.nextSibling);
   }
   new MutationObserver((mutationRecords, observer) => {
@@ -94,10 +96,10 @@ function youtube() {
         for (const addedNode of mutation.addedNodes) {
           if (!addedNode.tagName) continue
           let elements = [];
-          if (addedNode.matches('a[href*="pastebin.com%2F"]')) {
+          if (addedNode.matches(query)) {
             elements.push(addedNode);
           } else {
-            for (const element of addedNode.querySelectorAll('a[href*="pastebin.com%2F"]')) {
+            for (const element of addedNode.querySelectorAll(query)) {
               elements.push(element)
             }
           }
@@ -107,8 +109,18 @@ function youtube() {
             if (!match) continue;
             let pbId = match[1];
             console.log(`dynamic adding pbId ${pbId}`);
-            let poblinkElement = createElement(`<a id="poblink" href="${createPobPastebinLink(pbId)}" style="margin: 1ex">Poblink</a>`);
+            let poblinkElement = createElement(`<a id="poblink" href="${createPobPastebinLink(pbId)}" class="poblink" style="margin: 1ex">Poblink</a>`);
             element.parentElement.insertBefore(poblinkElement, element.nextSibling);
+          }
+        }
+        if (mutation.type === "childList" & mutation.target.matches(query)) {
+          let element = mutation.target;
+          if (element.nextSibling.matches(".poblink")) {
+            let match = element.href.match(regex);
+            if (!match) break;
+            let pbId = match[1];
+            console.log(`updating pbId ${pbId}`);
+            element.nextSibling.href = createPobPastebinLink(pbId);
           }
         }
       }
