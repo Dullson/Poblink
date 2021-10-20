@@ -172,6 +172,7 @@ async function twitch() {
     })
     .observe(chatContainer, {
       childList: true,
+      subtree: true
     });
 }
 
