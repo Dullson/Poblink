@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        Poblink
-// @version     0.2.0
+// @version     0.2.1
 // @description A script to add path of building links next to pastebin links
 // @license     MIT
 // @author      Dullson
@@ -172,6 +172,7 @@ async function twitch() {
     })
     .observe(chatContainer, {
       childList: true,
+      subtree: true
     });
 }
 
