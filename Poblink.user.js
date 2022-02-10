@@ -99,13 +99,13 @@ function poeForum() {
 }
 
 function pastebin() {
-  const regex = /https:\/\/pastebin\.com\/(\w{8})/;
-  let match = document.location.href.match(regex);
-  if (!match) return;
-  let pbId = match[1];
+  const selector = linkSelectors.find(s => s.id == "Pastebin");
+  let pobUrl = selector.tryParse(document.location.href);
+  if (!pobUrl) return;
+  let poblinkElement = createPoblinkElement(pobUrl)
+  addPoblinkStyle("margin: 0 0 0 20px");
   let infoPanel = document.querySelector(".info-bottom");
-  let element = createElement(`<a href="${createPobPastebinLink(pbId)}" style="margin-left: 22px">Poblink</a>`);
-  infoPanel.appendChild(element);
+  infoPanel.appendChild(poblinkElement);
 }
 
 function youtube() {
@@ -198,10 +198,6 @@ function createElement(str) {
 
 function createPoblinkElement(url) {
   return createElement(`<a href="${url}" class="poblink">Poblink</a>`);
-}
-
-function createPobPastebinLink(id) {
-  return `pob:pastebin/${id}`;
 }
 
 function addPoblinkStyle(style) {
