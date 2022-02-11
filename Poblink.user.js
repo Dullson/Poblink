@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        Poblink
-// @version     0.3.0
-// @description A script to add path of building links next to pastebin links
+// @version     0.4.0
+// @description A script to add path of building links next to build share links
 // @license     MIT
 // @author      Dullson
 // @namespace   https://github.com/Dullson
@@ -13,34 +13,66 @@
 // @supportURL  https://github.com/Dullson/Poblink/issues
 // ==/UserScript==
 
-const presets = [
-{
-  name: 'PoeForum',
-  regex: /^https:\/\/www\.pathofexile\.com\/forum\/view-thread\//,
-  run: poeForum,
-},
-{
-  name: 'Youtube',
-  regex: /^https:\/\/www\.youtube\.com\//,
-  run: youtube,
-},
-{
-  name: 'Reddit',
-  regex: /^https:\/\/\w{3}\.reddit\.com\//,
-  run: reddit,
-},
-{
-  name: 'Pastebin',
-  regex: /^https:\/\/pastebin\.com\/\w{8}/,
-  run: pastebin,
-},
+const sitePresets = [
+  {
+    name: 'PoeForum',
+    regex: /^https:\/\/www\.pathofexile\.com\/forum\/view-thread\//,
+    run: poeForum,
+  },
+  {
+    name: 'Youtube',
+    regex: /^https:\/\/www\.youtube\.com\//,
+    run: youtube,
+  },
+  {
+    name: 'Reddit',
+    regex: /^https:\/\/\w{3}\.reddit\.com\//,
+    run: reddit,
+  },
+  {
+    name: 'Pastebin',
+    regex: /^https:\/\/pastebin\.com\/\w{8}/,
+    run: pastebin,
+  },
 ];
 
-console.log = function () { };
+const linkSelectors = [
+  {
+    id: 'Pastebin',
+    url: 'pastebin.com',
+    regex: /pastebin\.com\/(\w{8})/,
+    query: 'a[href^="https://pastebin.com/"]',
+    tryParse: function (str) {
+      let match = str.match(this.regex);
+      if (match) return `pob:${this.id.toLowerCase()}/${match[1]}`;
+    },
+  },
+  {
+    id: 'PoBBin',
+    url: 'pobb.in',
+    regex: /pobb\.in\/(\w{12})/,
+    query: 'a[href^="https://pobb.in/"]',
+    tryParse: function (str) {
+      let match = str.match(this.regex);
+      if (match) return `pob:${this.id.toLowerCase()}/${match[1]}`;
+    },
+  },
+  {
+    id: 'PoeNinja',
+    url: 'poe.ninja',
+    regex: /poe\.ninja\/pob\/(\w+)/,
+    query: 'a[href^="https://poe.ninja/pob/"]',
+    tryParse: function (str) {
+      let match = str.match(this.regex);
+      if (match) return `pob:${this.id.toLowerCase()}/${match[1]}`;
+    },
+  },
+];
+
 
 (function initialize() {
   addPoblinkStyle("margin: 1ex; white-space: nowrap;");
-  for (const preset of presets) {
+  for (const preset of sitePresets) {
     if (document.location.href.match(preset.regex)) {
       console.log(`Poblink: Running ${preset.name} preset.`);
       preset.run();
@@ -52,37 +84,40 @@ console.log = function () { };
 })();
 
 function poeForum() {
-  const selectors = {
-    regex: /https:\/\/pastebin\.com\/(\w{8})/,
-    query: 'a[href^="https://pastebin.com/"]'
-  };
-  let snapshot = document.evaluate("//text()[contains(., 'pastebin.com') and not(ancestor::a)]", document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null)
-  for (let i = 0; i < snapshot.snapshotLength; i++) {
-    let element = snapshot.snapshotItem(i);
-    let match = element.textContent.match(selectors.regex);
-    if (!match) continue;
-    let pbId = match[1];
-    let poblinkElement = createPoblinkElement(createPobPastebinLink(pbId))
-    element.parentElement.insertBefore(poblinkElement, element.nextSibling);
+  for (const selector of linkSelectors) {
+    let snapshot = document.evaluate(`//text()[contains(., '${selector.url}') and not(ancestor::a)]`, document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null)
+    for (let i = 0; i < snapshot.snapshotLength; i++) {
+      let element = snapshot.snapshotItem(i);
+      let pobUrl = selector.tryParse(element.textContent);
+      if (!pobUrl) continue;
+      let poblinkElement = createPoblinkElement(pobUrl)
+      element.parentElement.insertBefore(poblinkElement, element.nextSibling);
+    }
+
   }
-  staticSearch(selectors);
+  staticSearch(linkSelectors);
 }
 
 function pastebin() {
-  const regex = /https:\/\/pastebin\.com\/(\w{8})/;
-  let match = document.location.href.match(regex);
-  if (!match) return;
-  let pbId = match[1];
+  const selector = linkSelectors.find(s => s.id == "Pastebin");
+  let pobUrl = selector.tryParse(document.location.href);
+  if (!pobUrl) return;
+  let poblinkElement = createPoblinkElement(pobUrl)
+  addPoblinkStyle("margin: 0 0 0 20px");
   let infoPanel = document.querySelector(".info-bottom");
-  let element = createElement(`<a href="${createPobPastebinLink(pbId)}" style="margin-left: 22px">Poblink</a>`);
-  infoPanel.appendChild(element);
+  infoPanel.appendChild(poblinkElement);
 }
 
 function youtube() {
-  const selectors = {
-    regex: /pastebin\.com%2F(\w{8})/,
-    query: 'a[href*="pastebin.com%2F"]'
-  };
+  const selectors = linkSelectors.map((s) => {
+    return {
+      id: s.id,
+      url: s.url,
+      regex: new RegExp(s.regex.source.replaceAll('\\/', '%2F'), s.regex.flags),
+      query: s.query.replace('^="https://', '*="').replaceAll('/', '%2F'),
+      tryParse: s.tryParse,
+    };
+  });
   startObserver(selectors);
 }
 
@@ -94,54 +129,51 @@ function reddit() {
 }
 
 function genericPreset() {
-  const selectors = {
-    regex: /https:\/\/pastebin\.com\/(\w{8})/,
-    query: 'a[href^="https://pastebin.com/"]'
-  };
-  staticSearch(selectors);
-  startObserver(selectors);
+  staticSearch(linkSelectors);
+  startObserver(linkSelectors);
 }
 
 function staticSearch(selectors) {
-  for (const element of document.querySelectorAll(selectors.query)) {
-    let match = element.href.match(selectors.regex);
-    if (!match) continue;
-    let pbId = match[1];
-    let poblinkElement = createPoblinkElement(createPobPastebinLink(pbId));
-    element.parentElement.insertBefore(poblinkElement, element.nextSibling);
+  for (const selector of selectors) {
+    for (const element of document.querySelectorAll(selector.query)) {
+      let pobUrl = selector.tryParse(element.href);
+      if (!pobUrl) continue;
+      let poblinkElement = createPoblinkElement(pobUrl)
+      element.parentElement.insertBefore(poblinkElement, element.nextSibling);
+    }
   }
 }
 
 function startObserver(selectors) {
   new MutationObserver((mutationRecords, observer) => {
     for (const mutation of mutationRecords) {
-      let elements = [];
-      for (const addedNode of mutation.addedNodes) {
-        if (!addedNode.tagName) continue;
-        if (addedNode.matches(selectors.query)) {
-          elements.push(addedNode);
-        } else {
-          for (const e of addedNode.querySelectorAll(selectors.query)) {
-            elements.push(e);
+      for (const selector of selectors) {
+        let elements = [];
+        for (const addedNode of mutation.addedNodes) {
+          if (!addedNode.tagName) continue;
+          if (addedNode.matches(selector.query)) {
+            elements.push(addedNode);
+          } else {
+            for (const e of addedNode.querySelectorAll(selector.query)) {
+              elements.push(e);
+            }
           }
         }
-      }
-      if (mutation.target.matches(selectors.query)) {
-        elements.push(mutation.target);
-      }
-      for (const element of elements) {
-        let match = element.href.match(selectors.regex);
-        if (!match) continue;
-        let pbId = match[1];
-        let pbUri = createPobPastebinLink(pbId);
-        if (element.nextSibling && element.nextSibling.matches('.poblink')) {
-          if (element.nextSibling.href !== pbUri) {
-            element.nextSibling.href = pbUri;
-          }
+        if (mutation.target.matches(selector.query)) {
+          elements.push(mutation.target);
         }
-        else {
-          let poblinkElement = createPoblinkElement(pbUri);
-          element.parentElement.insertBefore(poblinkElement, element.nextSibling);
+        for (const element of elements) {
+          let pobUrl = selector.tryParse(element.href);
+          if (!pobUrl) continue;
+          if (element.nextSibling && element.nextSibling.matches('.poblink')) {
+            if (element.nextSibling.href !== pobUrl) {
+              element.nextSibling.href = pobUrl;
+            }
+          }
+          else {
+            let poblinkElement = createPoblinkElement(pobUrl);
+            element.parentElement.insertBefore(poblinkElement, element.nextSibling);
+          }
         }
       }
       for (const removedNode of mutation.removedNodes) {
@@ -166,10 +198,6 @@ function createElement(str) {
 
 function createPoblinkElement(url) {
   return createElement(`<a href="${url}" class="poblink">Poblink</a>`);
-}
-
-function createPobPastebinLink(id) {
-  return `pob:pastebin/${id}`;
 }
 
 function addPoblinkStyle(style) {
