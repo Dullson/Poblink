@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        Poblink
-// @version     0.4.0
+// @version     0.4.1
 // @description A script to add path of building links next to build share links
 // @license     MIT
 // @author      Dullson
@@ -50,7 +50,7 @@ const linkSelectors = [
   {
     id: 'PoBBin',
     url: 'pobb.in',
-    regex: /pobb\.in\/(\w{12})/,
+    regex: /pobb\.in\/([\w-]{12})/,
     query: 'a[href^="https://pobb.in/"]',
     tryParse: function (str) {
       let match = str.match(this.regex);
