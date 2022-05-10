@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        Poblink
-// @version     0.4.1
+// @version     0.5.0
 // @description A script to add path of building links next to build share links
 // @license     MIT
 // @author      Dullson
@@ -23,6 +23,11 @@ const sitePresets = [
     name: 'Youtube',
     regex: /^https:\/\/www\.youtube\.com\//,
     run: youtube,
+  },
+  {
+    name: 'GoogleDocs',
+    regex: /^https:\/\/docs\.google\.com\//,
+    run: googleDocs,
   },
   {
     name: 'Reddit',
@@ -85,12 +90,14 @@ const linkSelectors = [
 
 function poeForum() {
   for (const selector of linkSelectors) {
-    let snapshot = document.evaluate(`//text()[contains(., '${selector.url}') and not(ancestor::a)]`, document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null)
+    let snapshot = document.evaluate(
+      `//text()[contains(., '${selector.url}') and not(ancestor::a)]`
+      , document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
     for (let i = 0; i < snapshot.snapshotLength; i++) {
       let element = snapshot.snapshotItem(i);
       let pobUrl = selector.tryParse(element.textContent);
       if (!pobUrl) continue;
-      let poblinkElement = createPoblinkElement(pobUrl)
+      let poblinkElement = createPoblinkElement(pobUrl);
       element.parentElement.insertBefore(poblinkElement, element.nextSibling);
     }
 
@@ -102,28 +109,34 @@ function pastebin() {
   const selector = linkSelectors.find(s => s.id == "Pastebin");
   let pobUrl = selector.tryParse(document.location.href);
   if (!pobUrl) return;
-  let poblinkElement = createPoblinkElement(pobUrl)
+  let poblinkElement = createPoblinkElement(pobUrl);
   addPoblinkStyle("margin: 0 0 0 20px");
   let infoPanel = document.querySelector(".info-bottom");
   infoPanel.appendChild(poblinkElement);
 }
 
 function youtube() {
-  const selectors = linkSelectors.map((s) => {
-    return {
-      id: s.id,
-      url: s.url,
-      regex: new RegExp(s.regex.source.replaceAll('\\/', '%2F'), s.regex.flags),
-      query: s.query.replace('^="https://', '*="').replaceAll('/', '%2F'),
-      tryParse: s.tryParse,
-    };
-  });
+  const selectors = linkSelectors.map((s) => Object.assign({}, s, {
+    regex: new RegExp(s.regex.source.replaceAll('\\/', '%2F'), s.regex.flags),
+    query: s.query.replace('^="https://', '*="').replaceAll('/', '%2F'),
+  }));
+  startObserver(selectors);
+}
+
+function googleDocs() {
+  const selectors = linkSelectors.map((s) => Object.assign({}, s, {
+    query: s.query.replace('^="https://', '*="')
+  }));
+  staticSearch(selectors);
   startObserver(selectors);
 }
 
 function reddit() {
   if (!document.location.host.startsWith('old')) { // new design
-    addPoblinkStyle("color: var(--newCommunityTheme-linkText);text-decoration: underline;");
+    addPoblinkStyle(`
+    color: var(--newCommunityTheme-linkText);
+    text-decoration: underline;
+    `);
   }
   genericPreset();
 }
@@ -138,7 +151,8 @@ function staticSearch(selectors) {
     for (const element of document.querySelectorAll(selector.query)) {
       let pobUrl = selector.tryParse(element.href);
       if (!pobUrl) continue;
-      let poblinkElement = createPoblinkElement(pobUrl)
+      console.log(`Poblink: generating link for ${element.href}`);
+      let poblinkElement = createPoblinkElement(pobUrl);
       element.parentElement.insertBefore(poblinkElement, element.nextSibling);
     }
   }
@@ -165,14 +179,16 @@ function startObserver(selectors) {
         for (const element of elements) {
           let pobUrl = selector.tryParse(element.href);
           if (!pobUrl) continue;
-          if (element.nextSibling && element.nextSibling.matches('.poblink')) {
-            if (element.nextSibling.href !== pobUrl) {
-              element.nextSibling.href = pobUrl;
+          const nextNode = element.nextSibling;
+          if (nextNode && nextNode.matches && nextNode.matches('.poblink')) {
+            if (nextNode.href !== pobUrl) {
+              nextNode.href = pobUrl;
             }
           }
           else {
+            console.log(`Poblink: generating link for ${element.href}`);
             let poblinkElement = createPoblinkElement(pobUrl);
-            element.parentElement.insertBefore(poblinkElement, element.nextSibling);
+            element.parentElement.insertBefore(poblinkElement, nextNode);
           }
         }
       }
