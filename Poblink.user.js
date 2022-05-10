@@ -171,15 +171,16 @@ function startObserver(selectors) {
         for (const element of elements) {
           let pobUrl = selector.tryParse(element.href);
           if (!pobUrl) continue;
-          if (element.nextSibling && element.nextSibling.matches('.poblink')) {
-            if (element.nextSibling.href !== pobUrl) {
-              element.nextSibling.href = pobUrl;
+          const nextNode = element.nextSibling;
+          if (nextNode && nextNode.matches && nextNode.matches('.poblink')) {
+            if (nextNode.href !== pobUrl) {
+              nextNode.href = pobUrl;
             }
           }
           else {
             console.log(`Poblink: generating link for ${element.href}`);
             let poblinkElement = createPoblinkElement(pobUrl);
-            element.parentElement.insertBefore(poblinkElement, element.nextSibling);
+            element.parentElement.insertBefore(poblinkElement, nextNode);
           }
         }
       }
