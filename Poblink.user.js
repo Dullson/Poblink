@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name        Poblink
-// @version     0.4.1
+// @version     0.5.0
 // @description A script to add path of building links next to build share links
 // @license     MIT
 // @author      Dullson
