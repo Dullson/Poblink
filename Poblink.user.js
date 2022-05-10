@@ -111,15 +111,10 @@ function pastebin() {
 }
 
 function youtube() {
-  const selectors = linkSelectors.map((s) => {
-    return {
-      id: s.id,
-      url: s.url,
+  const selectors = linkSelectors.map((s) => Object.assign({}, s, {
       regex: new RegExp(s.regex.source.replaceAll('\\/', '%2F'), s.regex.flags),
       query: s.query.replace('^="https://', '*="').replaceAll('/', '%2F'),
-      tryParse: s.tryParse,
-    };
-  });
+  }));
   startObserver(selectors);
 }
 
