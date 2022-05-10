@@ -25,6 +25,11 @@ const sitePresets = [
     run: youtube,
   },
   {
+    name: 'GoogleDocs',
+    regex: /^https:\/\/docs\.google\.com\//,
+    run: googleDocs,
+  },
+  {
     name: 'Reddit',
     regex: /^https:\/\/\w{3}\.reddit\.com\//,
     run: reddit,
@@ -112,9 +117,17 @@ function pastebin() {
 
 function youtube() {
   const selectors = linkSelectors.map((s) => Object.assign({}, s, {
-      regex: new RegExp(s.regex.source.replaceAll('\\/', '%2F'), s.regex.flags),
-      query: s.query.replace('^="https://', '*="').replaceAll('/', '%2F'),
+    regex: new RegExp(s.regex.source.replaceAll('\\/', '%2F'), s.regex.flags),
+    query: s.query.replace('^="https://', '*="').replaceAll('/', '%2F'),
   }));
+  startObserver(selectors);
+}
+
+function googleDocs() {
+  const selectors = linkSelectors.map((s) => Object.assign({}, s, {
+    query: s.query.replace('^="https://', '*="')
+  }));
+  staticSearch(selectors);
   startObserver(selectors);
 }
 
