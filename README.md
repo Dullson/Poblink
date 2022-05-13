@@ -16,6 +16,7 @@ Direct import support for Poe.Ninja build page and Poe profile page is also plan
 
 
 ## Changelog
+- v0.5.0: Added support for docs.google.com.
 - v0.4.0: Added support for poe.ninja/pob and pobb.in links.
 - v0.3.0: Restructured scanning code to be more robust and fixed some bugs.
 - v0.2.0: Added support for youtube.com.
